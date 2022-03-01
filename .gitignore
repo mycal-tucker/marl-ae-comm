@@ -1,2 +1,9 @@
 __pycache__
 .DS_Store
+
+envs/
+cifar-game/data
+cifar-game/runs
+marl-grid/env/marlgrid.egg-info/
+marl-grid/red-blue-doors/runs/
+

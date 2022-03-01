@@ -43,7 +43,13 @@ def img_to_state_var(x, use_gpu=True, dtype=np.float32):
 
 
 def to_torch(x, use_gpu=True, dtype=np.float32):
-    x = np.array(x, dtype=dtype)
+    cpu_version = []
+    for elt in x:
+        if isinstance(elt, torch.Tensor):
+            cpu_version.append(elt.cpu())
+        else:
+            cpu_version.append(elt)
+    x = np.array(cpu_version, dtype=dtype)
     var = torch.from_numpy(x)
     return var.cuda() if use_gpu else var
 
