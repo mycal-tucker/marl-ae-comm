@@ -42,10 +42,11 @@ if __name__ == '__main__':
                                    act_space=env.action_space,
                                    num_agents=cfg.env_cfg.num_agents,
                                    comm_len=cfg.env_cfg.comm_len,
-                                   discrete_comm=cfg.env_cfg.discrete_comm,
+                                   comm_mode=cfg.env_cfg.comm_mode,
                                    ae_pg=cfg.ae_pg,
                                    ae_type=cfg.ae_type,
-                                   img_feat_dim=cfg.img_feat_dim)
+                                   img_feat_dim=cfg.img_feat_dim,
+                                   num_protos=cfg.num_protos)
 
     # (2) create master network.
     # hogwild-style update will be applied to the master weight.

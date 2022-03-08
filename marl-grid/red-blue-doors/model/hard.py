@@ -28,7 +28,7 @@ class HardSharedNetwork(A3CTemplate):
             obs_space,
             comm_size=0,
             comm_len=0,
-            discrete_comm=True,
+            comm_mode='binary',
             emb_size=0,
             num_agents=num_agents,
             num_blind_agents=num_blind_agents,

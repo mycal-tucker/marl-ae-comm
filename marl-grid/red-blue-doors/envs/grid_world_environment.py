@@ -22,7 +22,8 @@ def create_grid_world_env(env_cfg):
         view_tile_size=env_cfg.view_tile_size,
         comm_dim=2,
         comm_len=env_cfg.comm_len,
-        discrete_comm=env_cfg.discrete_comm,
+        discrete_comm=False,
+        # comm_mode=env_cfg.comm_mode,
         n_adversaries=0,
         observation_style=env_cfg.observation_style,
         observe_position=env_cfg.observe_position,
@@ -83,8 +84,7 @@ def get_env_name(env_cfg):
 
     if env_cfg.comm_len > 0:
         name += f'{env_cfg.comm_len}C'
-        if not env_cfg.discrete_comm:
-            name += 'cont'
+        name += env_cfg.comm_mode
 
     if env_cfg.team_reward_type != 'none':
         name += f'TR{env_cfg.team_reward_type}'

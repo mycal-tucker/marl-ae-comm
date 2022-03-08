@@ -30,6 +30,10 @@ python train_ae.py --set num_workers 8 env_cfg.comm_len 10 --gpu 0
 
 Videos, tensorboard logs, and checkpoints generated during training are saved in `./runs` by default.
 
+## Comm options
+Mycal has been experimenting with different communication methods. Remember to set it in config.py
+
+
 ## Code layout
 
 | Code          | Detail |

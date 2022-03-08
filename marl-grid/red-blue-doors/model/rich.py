@@ -15,14 +15,14 @@ from model.model_utils import LSTMhead, InputProcessingModule
 
 class RichSharedNetwork(A3CTemplate):
     def __init__(self, obs_space, act_space, num_agents, comm_size, comm_len,
-                 discrete_comm, hidden_size=256, emb_size=64,
+                 comm_mode, hidden_size=256, emb_size=64,
                  num_blind_agents=0, share_critic=False, layer_norm=False,
                  comm_rnn=True):
         super().__init__()
 
         # assume action space is a Tuple of 2 spaces
         self.env_action_size = act_space[0].n  # Discrete
-        self.discrete_comm = discrete_comm
+        self.comm_mode = comm_mode
 
         # assume comm action space to be Discrete/MultiDiscrete/Box
         if act_space[1].__class__.__name__ == 'MultiDiscrete':
@@ -41,7 +41,7 @@ class RichSharedNetwork(A3CTemplate):
         self.input_processor = InputProcessingModule(obs_space,
                                                      comm_size,
                                                      comm_len,
-                                                     discrete_comm,
+                                                     comm_mode,
                                                      emb_size,
                                                      num_agents,
                                                      num_blind_agents,

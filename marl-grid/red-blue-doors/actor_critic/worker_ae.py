@@ -143,6 +143,7 @@ class Worker(mp.Process):
             all_pls = [[] for _ in range(self.num_acts)]
             all_vls = [[] for _ in range(self.num_acts)]
             all_els = [[] for _ in range(self.num_acts)]
+            all_rews = [[] for _ in range(self.num_acts)]
 
             comm_ae_losses = []
 
@@ -160,7 +161,7 @@ class Worker(mp.Process):
                     gae = torch.zeros(1, 1).cuda()
                     t_value = tar_val[agent]
 
-                    pls, vls, els = [], [], []
+                    pls, vls, els, rews = [], [], [], []
                     for i, (pi_logit, action, value, reward, comm_ae_loss
                             ) in enumerate(traj):
                         comm_ae_losses.append(comm_ae_loss.item())
@@ -181,6 +182,8 @@ class Worker(mp.Process):
                         pls.append(ops.to_numpy(pl))
                         vls.append(ops.to_numpy(vl))
                         els.append(ops.to_numpy(el))
+                        rews.append(ops.to_numpy(reward[agent]))
+
 
                         reward_log += reward[agent]
                         loss += (tl + comm_ae_loss * self.ae_loss_k)
@@ -188,6 +191,7 @@ class Worker(mp.Process):
                     all_pls[aid].append(np.mean(pls))
                     all_vls[aid].append(np.mean(vls))
                     all_els[aid].append(np.mean(els))
+                    all_rews[aid].append(np.mean(rews))
 
             # accumulate gradient locally
             loss.backward()
@@ -203,9 +207,12 @@ class Worker(mp.Process):
                             agent_id]
                         log_dict[f'{act}_entropy/{agent}'] = all_els[act_id][
                             agent_id]
+                        log_dict[f'{act}_reward/{agent}'] = all_rews[act_id][
+                            agent_id]
                     log_dict[f'policy_loss/{act}'] = np.mean(all_pls[act_id])
                     log_dict[f'value_loss/{act}'] = np.mean(all_vls[act_id])
                     log_dict[f'entropy/{act}'] = np.mean(all_els[act_id])
+                    log_dict[f'reward/{act}'] = np.mean(all_rews[act_id])
                 log_dict['ae_loss'] = np.mean(comm_ae_losses)
 
                 for k, v in log_dict.items():

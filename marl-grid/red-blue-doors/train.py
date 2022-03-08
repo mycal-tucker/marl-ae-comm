@@ -54,7 +54,7 @@ if __name__ == '__main__':
             num_agents=cfg.env_cfg.num_agents,
             comm_size=2,
             comm_len=cfg.env_cfg.comm_len,
-            discrete_comm=cfg.env_cfg.discrete_comm,
+            comm_mode=cfg.env_cfg.comm_mode,
             num_blind_agents=cfg.env_cfg.num_blind_agents,
             share_critic=cfg.share_critic,
             layer_norm=cfg.layer_norm,

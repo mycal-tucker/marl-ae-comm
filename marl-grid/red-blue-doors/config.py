@@ -52,8 +52,7 @@ def get_env_cfg():
     # agent comm length
     config.comm_len = 0
 
-    # if False, use continuous communication
-    config.discrete_comm = False
+    config.comm_mode = 'onehot_proto'  # Options are ['None', 'onehot', 'binary', 'onehot_proto']
 
     config.team_reward_type = 'none'
     config.team_reward_freq = 'none'
@@ -103,7 +102,8 @@ def get_config(args, eval=False):
     config.anneal_comm_rew = False
     config.ae_loss_k = 1.0
     config.ae_pg = 0
-    config.ae_type = ''  # ['', 'fc', 'mlp', 'rfc', 'rmlp']
+    config.ae_type = 'onehot_proto'  # ['', 'fc', 'mlp', 'rfc', 'rmlp', 'onehot_proto']
+    config.num_protos = 10  # Integer
     config.img_feat_dim = 64
     config.comm_vf = False
 

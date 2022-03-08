@@ -26,6 +26,7 @@ class STE(torch.autograd.Function):
         return F.hardtanh(grad_output)
 
 
+
 class InputProcessor(nn.Module):
     """
     Pre-process the following individual observations:
@@ -148,13 +149,17 @@ class InputProcessor(nn.Module):
 
 
 class EncoderDecoder(nn.Module):
-    def __init__(self, obs_space, comm_len, discrete_comm, num_agents,
-                 ae_type='', img_feat_dim=64):
+    def __init__(self, obs_space, comm_len, comm_mode, num_agents,
+                 ae_type='', img_feat_dim=64, num_protos=None):
         super(EncoderDecoder, self).__init__()
 
         self.preprocessor = InputProcessor(obs_space, 0, num_agents,
                                            last_fc_dim=img_feat_dim)
         in_size = self.preprocessor.feat_dim
+        if comm_mode == 'onehot_proto':
+            assert num_protos is not None, "Must define num protos for proto nets"
+            self.num_protos = num_protos
+        self.protos = nn.Linear(self.num_protos, comm_len)
 
         if ae_type == 'rfc':
             # random projection using fc
@@ -218,6 +223,26 @@ class EncoderDecoder(nn.Module):
                 nn.ReLU(),
                 nn.Linear(128, in_size),
             )
+        elif ae_type == 'onehot_proto':
+            self.encoder = nn.Sequential(
+                nn.Linear(in_size, 128),
+                nn.ReLU(),
+                nn.Linear(128, 64),
+                nn.ReLU(),
+                nn.Linear(64, 32),
+                nn.ReLU(),
+                nn.Linear(32, self.num_protos)
+                # End in a linear layer, which will turn into onehot and then proto
+            )
+            self.decoder = nn.Sequential(
+                nn.Linear(comm_len, 32),
+                nn.ReLU(),
+                nn.Linear(32, 64),
+                nn.ReLU(),
+                nn.Linear(64, 128),
+                nn.ReLU(),
+                nn.Linear(128, in_size),
+            )
         elif ae_type == '':
             # AE
             self.encoder = nn.Sequential(
@@ -242,7 +267,7 @@ class EncoderDecoder(nn.Module):
         else:
             raise NotImplementedError
 
-        self.discrete_comm = discrete_comm
+        self.comm_mode = comm_mode
         self.ae_type = ae_type
 
     def decode(self, x):
@@ -261,10 +286,11 @@ class EncoderDecoder(nn.Module):
 
         if self.ae_type in {'rfc', 'rmlp'}:
             # do not detach since there's no reconstruction loss
-            if self.discrete_comm:
+            if self.comm_mode == 'binary':
                 encoded = STE.apply(encoded)
+            elif self.comm_mode == 'onehot':
+                assert False, "Not ready"
             return encoded, torch.tensor(0.0)
-
         elif self.ae_type in {'fc', 'mlp'}:
             # get intermediate reconstruction loss
             decoded = self.decoder(encoded)
@@ -272,17 +298,27 @@ class EncoderDecoder(nn.Module):
 
             # detach encoded features and get comm
             comm = self.fc(encoded.detach())
-            if self.discrete_comm:
+            if self.comm_mode == 'binary':
                 comm = STE.apply(comm)
+            if self.comm_mode == 'onehot':
+                assert False, "Not ready fc/mlp"
             return comm, loss
-
-        elif self.ae_type == '':
-            if self.discrete_comm:
-                encoded = STE.apply(encoded)
+        elif self.ae_type == 'onehot_proto':
+            assert self.comm_mode == 'onehot_proto', "Need onehot comm mode for onehot arch."
+            onehot = F.gumbel_softmax(encoded, tau=1, hard=True)
+            proto = self.protos(onehot)
+            encoded = proto
             decoded = self.decoder(encoded)
             loss = F.mse_loss(decoded, feat)
             return encoded.detach(), loss
-
+        elif self.ae_type == '':
+            if self.comm_mode == 'binary':
+                encoded = STE.apply(encoded)
+            elif self.comm_mode == 'onehot':
+                encoded = F.gumbel_softmax(encoded, tau=1, hard=True)
+            decoded = self.decoder(encoded)
+            loss = F.mse_loss(decoded, feat)
+            return encoded.detach(), loss
         else:
             raise NotImplementedError
 
@@ -292,8 +328,8 @@ class AENetwork(A3CTemplate):
     An network with AE comm.
     """
     def __init__(self, obs_space, act_space, num_agents, comm_len,
-                 discrete_comm, ae_pg=0, ae_type='', hidden_size=256,
-                 img_feat_dim=64):
+                 comm_mode, ae_pg=0, ae_type='', hidden_size=256,
+                 img_feat_dim=64, num_protos=None):
         super().__init__()
 
         # assume action space is a Tuple of 2 spaces
@@ -303,9 +339,9 @@ class AENetwork(A3CTemplate):
 
         self.num_agents = num_agents
 
-        self.comm_ae = EncoderDecoder(obs_space, comm_len, discrete_comm,
+        self.comm_ae = EncoderDecoder(obs_space, comm_len, comm_mode,
                                       num_agents, ae_type=ae_type,
-                                      img_feat_dim=img_feat_dim)
+                                      img_feat_dim=img_feat_dim, num_protos=num_protos)
 
         feat_dim = self.comm_ae.preprocessor.feat_dim
 

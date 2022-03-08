@@ -71,12 +71,12 @@ class ImgModule(nn.Module):
 class CommModule(nn.Module):
     """Process discrete / continuous binary messages of shape
     (B, num_agents, comm_len)."""
-    def __init__(self, comm_size, comm_len, discrete_comm, hidden_size,
+    def __init__(self, comm_size, comm_len, comm_mode, hidden_size,
                  emb_size, comm_rnn):
         super(CommModule, self).__init__()
         assert comm_size == 2
 
-        if discrete_comm:
+        if comm_mode == 'onehot':
             self.emb = nn.Embedding(comm_size, emb_size)
             self.emb_fc = nn.Sequential(nn.Linear(emb_size, 32), nn.ReLU(),
                                         nn.Linear(32, 32), nn.ReLU())
@@ -89,14 +89,14 @@ class CommModule(nn.Module):
 
         self.comm_rnn = comm_rnn
         self.comm_len = comm_len
-        self.discrete_comm = discrete_comm
+        self.comm_mode = comm_mode
 
     def forward(self, inputs):
         B = inputs.shape[0]
         N = inputs.shape[-2]  # num_agents
 
         # get embedded communication
-        if self.discrete_comm:
+        if self.comm_mode == 'onehot':
             emb = self.emb(inputs.long())  # (B, N, comm_len, emb_size)
             emb = self.emb_fc(emb)  # (B, N, comm_len, 32)
 
@@ -121,7 +121,7 @@ class InputProcessingModule(nn.Module):
         - comm (CommModule)
         - position
     """
-    def __init__(self, obs_space, comm_size, comm_len, discrete_comm, emb_size,
+    def __init__(self, obs_space, comm_size, comm_len, comm_mode, emb_size,
                  num_agents, num_blind_agents, layer_norm, comm_rnn=True,
                  num_adversaries=0, observe_door=False):
         super(InputProcessingModule, self).__init__()
@@ -163,12 +163,12 @@ class InputProcessingModule(nn.Module):
 
         # states that contain other agents' specific information
         if 'comm' in self.obs_keys:
-            self.comm = CommModule(comm_size, comm_len, discrete_comm,
+            self.comm = CommModule(comm_size, comm_len, comm_mode,
                                    64, emb_size, comm_rnn)
             if comm_rnn:
                 state_feat_dim += 64
             else:
-                if discrete_comm:
+                if comm_mode == 'binary':
                     state_feat_dim += num_agents * comm_len * 32
                 else:
                     state_feat_dim += num_agents * 32
