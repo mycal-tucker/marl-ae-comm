@@ -33,6 +33,13 @@ Videos, tensorboard logs, and checkpoints generated during training are saved in
 ## Comm options
 Mycal has been experimenting with different communication methods. Remember to set it in config.py
 
+| What you want          | AE | Comm |
+| :-------------: |:-------------:|:-------------:|
+| continuous | '' | 'none' |
+| binary | '' | 'binary'|
+| onehot | '' | 'onehot'|
+| onehot_proto | '' | 'onehot_proto'|
+
 
 ## Code layout
 

@@ -103,7 +103,7 @@ def get_config(args, eval=False):
     config.ae_loss_k = 1.0
     config.ae_pg = 0
     config.ae_type = 'onehot_proto'  # ['', 'fc', 'mlp', 'rfc', 'rmlp', 'onehot_proto']
-    config.num_protos = 10  # Integer
+    config.num_protos = 128  # Integer
     config.img_feat_dim = 64
     config.comm_vf = False
 

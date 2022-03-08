@@ -411,7 +411,7 @@ class MultiGridEnv(gym.Env):
 
         self.comm_dim = self.agents[0].comm_dim
         self.comm_len = self.agents[0].comm_len
-        self.discrete_comm = self.agents[0].discrete_comm
+        self.comm_mode = self.agents[0].comm_mode
 
         self.reset()
 

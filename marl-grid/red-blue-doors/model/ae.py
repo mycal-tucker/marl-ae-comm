@@ -159,6 +159,8 @@ class EncoderDecoder(nn.Module):
         if comm_mode == 'onehot_proto':
             assert num_protos is not None, "Must define num protos for proto nets"
             self.num_protos = num_protos
+        else:
+            self.num_protos = 1  # Dummy; not used.
         self.protos = nn.Linear(self.num_protos, comm_len)
 
         if ae_type == 'rfc':
@@ -289,7 +291,7 @@ class EncoderDecoder(nn.Module):
             if self.comm_mode == 'binary':
                 encoded = STE.apply(encoded)
             elif self.comm_mode == 'onehot':
-                assert False, "Not ready"
+                assert False, "Not implemented"
             return encoded, torch.tensor(0.0)
         elif self.ae_type in {'fc', 'mlp'}:
             # get intermediate reconstruction loss
@@ -301,7 +303,7 @@ class EncoderDecoder(nn.Module):
             if self.comm_mode == 'binary':
                 comm = STE.apply(comm)
             if self.comm_mode == 'onehot':
-                assert False, "Not ready fc/mlp"
+                assert False, "Not implemented fc/mlp"
             return comm, loss
         elif self.ae_type == 'onehot_proto':
             assert self.comm_mode == 'onehot_proto', "Need onehot comm mode for onehot arch."
@@ -316,6 +318,7 @@ class EncoderDecoder(nn.Module):
                 encoded = STE.apply(encoded)
             elif self.comm_mode == 'onehot':
                 encoded = F.gumbel_softmax(encoded, tau=1, hard=True)
+            assert self.comm_mode != 'onehot_proto', "Onehot comm needs onehot arch."
             decoded = self.decoder(encoded)
             loss = F.mse_loss(decoded, feat)
             return encoded.detach(), loss

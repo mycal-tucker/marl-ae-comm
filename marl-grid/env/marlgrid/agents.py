@@ -47,7 +47,7 @@ class GridAgentInterface(GridAgent):
             spawn_delay=0,
             comm_dim=0,
             comm_len=1,
-            discrete_comm=True,
+            comm_mode='None',
             n_agents=1,
             is_adversary=False,
             observe_identity=True,
@@ -76,7 +76,7 @@ class GridAgentInterface(GridAgent):
         self.spawn_delay = spawn_delay
         self.comm_dim = comm_dim
         self.comm_len = comm_len
-        self.discrete_comm = discrete_comm
+        self.comm_mode = comm_mode
         self.n_agents = n_agents  # for communication space
         self.is_adversary = is_adversary
         self.observe_identity = observe_identity
@@ -91,7 +91,7 @@ class GridAgentInterface(GridAgent):
 
         if comm_dim > 0 and comm_len > 0:
             self.observe_comm = True
-            if discrete_comm:
+            if comm_mode == 'binary' or comm_mode == 'onehot':
                 comm_space = [gym.spaces.MultiDiscrete([int(
                     comm_dim) for _ in range(comm_len)]) for _ in range(
                     n_agents)]
@@ -230,7 +230,7 @@ class GridAgentInterface(GridAgent):
             spawn_delay=self.spawn_delay,
             comm_dim=self.comm_dim,
             comm_len=self.comm_len,
-            discrete_comm=self.discrete_comm,
+            comm_mode=self.comm_mode,
             n_agents=self.n_agents,
             is_adversary=self.is_adversary,
             observe_identity=self.observe_identity,
